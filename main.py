@@ -10,6 +10,7 @@ this program validates the line before writing it and reads it
 back to prove what landed on disk is exactly what was intended.
 """
 
+import hashlib
 import os
 import sys
 
@@ -17,6 +18,9 @@ MAX_CHARS = 88
 MAX_WORDS = 5
 
 LIE = "I invented that citation."
+
+# sha256 of the exact bytes the entry must write: the line plus one newline.
+EXPECTED_SHA256 = "4da008bf93924f0bc482d39dda2ebfb20ff7108a17274fec406b2b554758f7f7"
 
 
 def validate(line: str) -> str:
@@ -52,6 +56,8 @@ def main() -> int:
         written = handle.read()
     if written != (line + "\n").encode("utf-8"):
         raise RuntimeError("read-back verification failed: entry.txt differs")
+    if hashlib.sha256(written).hexdigest() != EXPECTED_SHA256:
+        raise RuntimeError("read-back verification failed: sha256 mismatch")
     stripped = written.decode("utf-8").strip()
     if stripped != line:
         raise RuntimeError("read-back verification failed: content changed")
